@@ -73,7 +73,7 @@ if (mode === "plan") {
       2,
     ),
   );
-  terraform("init", "-input=false", "-reconfigure", "-lockfile=readonly");
+  terraform("init", "-input=false", "-lockfile=readonly");
   terraform(
     "plan",
     "-input=false",
@@ -108,7 +108,7 @@ if (mode === "plan") {
     process.env.GITHUB_SHA,
     "Plan belongs to another infrastructure revision",
   );
-  terraform("init", "-input=false", "-reconfigure", "-lockfile=readonly");
+  terraform("init", "-input=false", "-lockfile=readonly");
   // Apply the exact reviewed binary plan. Do not regenerate it after approval.
   terraform(
     "apply",
