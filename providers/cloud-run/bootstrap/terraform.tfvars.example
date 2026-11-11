@@ -1,0 +1,3 @@
+project_id           = "your-billing-enabled-project"
+github_repository_id = "REPLACE_WITH_NUMERIC_REPOSITORY_ID"
+region               = "europe-southwest1"

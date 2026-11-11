@@ -1,0 +1,14 @@
+{
+  "ipma-proxy": {
+    "repository": "https://github.com/Zizico2/ipma-proxy.git",
+    "revision": "59b7adbc83fea6199da4cd840f7be32f6688f5ab"
+  },
+  "ipma-gateway": {
+    "repository": "https://github.com/Zizico2/ipma-gateway.git",
+    "revision": "6156a6d8f589583aeb6cbe598adca31c2b283657"
+  },
+  "ipma-proto": {
+    "repository": "https://github.com/Zizico2/ipma-proto.git",
+    "revision": "e733ded6d18495fbd0a2279bc983ed37cc3e5826"
+  }
+}

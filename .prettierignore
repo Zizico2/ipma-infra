@@ -1,0 +1,6 @@
+node_modules
+.sources
+.artifacts
+**/.terraform
+**/.terraform.lock.hcl
+package-lock.json

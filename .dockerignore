@@ -1,0 +1,10 @@
+**
+!containers/
+!containers/entrypoint.sh
+!.sources/
+!.sources/ipma-proxy/
+!.sources/ipma-proxy/**
+!.sources/ipma-gateway/
+!.sources/ipma-gateway/**
+.sources/**/.git
+.sources/**/target

@@ -1,0 +1,33 @@
+{
+  "name": "ipma-infra",
+  "version": "0.1.0",
+  "description": "Portable IPMA containers and gated infrastructure deployments",
+  "scripts": {
+    "sources": "node scripts/sources.ts",
+    "compose": "node scripts/compose.ts",
+    "smoke": "node scripts/smoke.ts",
+    "benchmark": "node scripts/benchmark.ts",
+    "check": "tsc && node --test tests/*.test.ts",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "hcp:setup": "node scripts/hcp-workspaces.ts",
+    "github:setup": "node scripts/github-environments.ts",
+    "cloud-run:plan": "node providers/cloud-run/deploy.ts plan",
+    "cloud-run:apply": "node providers/cloud-run/deploy.ts apply"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "prettier": "3.9.10",
+    "typescript": "7.0.2",
+    "yaml": "2.9.1"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.7",
+    "@grpc/proto-loader": "0.8.1"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=24.11 <27"
+  }
+}

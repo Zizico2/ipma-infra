@@ -1,0 +1,16 @@
+node_modules/
+.sources/
+.artifacts/
+.env
+.env.*
+!.env.example
+**/.terraform/
+**/*.tfstate*
+**/*.tfplan
+**/terraform.tfvars
+**/backend.hcl
+gha-creds-*.json
+crash.log
+
+.direnv/
+result

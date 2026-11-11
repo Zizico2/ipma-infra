@@ -1,0 +1,37 @@
+services:
+  adapter:
+    platform: linux/amd64
+    image: ipma-proxy:local
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+      args:
+        SERVICE: ipma-proxy
+        SOURCE_REVISION: ${ADAPTER_REVISION}
+    ports: ["127.0.0.1:50051:8080"]
+    environment:
+      RUST_LOG: ipma_proxy=info,ipma_service=info
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+  gateway:
+    platform: linux/amd64
+    image: ipma-gateway:local
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+      args:
+        SERVICE: ipma-gateway
+        SOURCE_REVISION: ${GATEWAY_REVISION}
+    ports: ["127.0.0.1:50052:8080"]
+    environment:
+      IPMA_GATEWAY_UPSTREAM_ADDRESS: http://adapter:8080
+      IPMA_GATEWAY_CACHE_MIB: "64"
+      IPMA_GATEWAY_CACHE_NEUTRAL_METADATA: x-forwarded-for,x-forwarded-proto,x-forwarded-host,forwarded,x-cloud-trace-context,traceparent,tracestate
+      RUST_LOG: ipma_gateway=info,ipma_gateway_core=info
+    depends_on: [adapter]
+    restart: on-failure:3
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
