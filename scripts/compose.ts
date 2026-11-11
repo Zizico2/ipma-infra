@@ -2,7 +2,8 @@ import { spawnSync } from "node:child_process";
 import { releases } from "./releases.ts";
 
 const pins = releases();
-const result = spawnSync("docker-compose", process.argv.slice(2), {
+// Docker's Nix wrapper supplies the Compose and Buildx plugin search paths.
+const result = spawnSync("docker", ["compose", ...process.argv.slice(2)], {
   stdio: "inherit",
   env: {
     ...process.env,

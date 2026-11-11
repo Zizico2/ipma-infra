@@ -50,8 +50,6 @@
               curl
               just
               docker-client
-              docker-compose
-              docker-buildx
               actionlint
               shellcheck
               hadolint
