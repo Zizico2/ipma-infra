@@ -51,19 +51,22 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 
 locals {
   principal_prefix = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject"
+  # New GitHub repositories use immutable subjects, including owner/repository IDs.
+  github_repository_parts = split("/", var.github_repository)
+  github_subject_prefix   = "repo:${local.github_repository_parts[0]}@${var.github_owner_id}/${local.github_repository_parts[1]}@${var.github_repository_id}"
 }
 
 resource "google_service_account_iam_member" "build_federation" {
   service_account_id = google_service_account.identity["build"].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "${local.principal_prefix}/repo:${var.github_repository}:ref:refs/heads/main"
+  member             = "${local.principal_prefix}/${local.github_subject_prefix}:ref:refs/heads/main"
 }
 
 resource "google_service_account_iam_member" "deploy_federation" {
   for_each           = var.environments
   service_account_id = google_service_account.identity["deploy"].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "${local.principal_prefix}/repo:${var.github_repository}:environment:${each.value}"
+  member             = "${local.principal_prefix}/${local.github_subject_prefix}:environment:${each.value}"
 }
 
 resource "google_project_iam_member" "plan_reads" {

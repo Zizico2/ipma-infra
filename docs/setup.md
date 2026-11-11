@@ -75,6 +75,13 @@ The current repository ID is obtained with:
 rtk proxy gh api repos/Zizico2/ipma-infra --jq .id
 ```
 
+The trust bindings use GitHub's immutable subject format, including owner and
+repository IDs. Confirm the repository uses that format with
+`gh api repos/Zizico2/ipma-infra/actions/oidc/customization/sub`; its
+`sub_claim_prefix` should include both `@ID` suffixes. Older repositories need to
+opt in to [immutable subject claims](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims)
+before using these bindings.
+
 Initialize and review the bootstrap plan before applying it:
 
 ```sh

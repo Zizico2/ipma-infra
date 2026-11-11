@@ -15,11 +15,14 @@ check:
     hadolint containers/Dockerfile
 
 terraform-check:
-    terraform -chdir=providers/cloud-run/bootstrap init -backend=false -input=false -lockfile=readonly
-    terraform -chdir=providers/cloud-run/bootstrap validate
-    terraform -chdir=providers/cloud-run/app init -backend=false -input=false -lockfile=readonly
-    terraform -chdir=providers/cloud-run/app validate
-    terraform -chdir=providers/cloud-run/app test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for root in bootstrap app; do
+        export TF_DATA_DIR="$PWD/.artifacts/terraform-check/$root"
+        terraform -chdir="providers/cloud-run/$root" init -backend=false -input=false -lockfile=readonly
+        terraform -chdir="providers/cloud-run/$root" validate
+        terraform -chdir="providers/cloud-run/$root" test
+    done
 
 images:
     npm run compose -- build
