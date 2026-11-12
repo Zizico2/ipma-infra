@@ -18,7 +18,7 @@ resource "google_artifact_registry_repository" "images" {
 }
 
 resource "google_service_account" "identity" {
-  for_each     = toset(["build", "deploy", "adapter", "gateway"])
+  for_each     = toset(["build", "deploy", "adapter", "gateway", "public-data-adapter", "public-data-gateway"])
   account_id   = "ipma-${each.key}"
   display_name = "IPMA ${each.key}"
   depends_on   = [google_project_service.api]
@@ -82,7 +82,7 @@ resource "google_project_iam_member" "deploy" {
 }
 
 resource "google_service_account_iam_member" "runtime_act_as" {
-  for_each           = toset(["adapter", "gateway"])
+  for_each           = toset(["adapter", "gateway", "public-data-adapter", "public-data-gateway"])
   service_account_id = google_service_account.identity[each.key].name
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.identity["deploy"].email}"

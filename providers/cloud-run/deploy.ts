@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { resolve } from "node:path";
-import { releases, services } from "../../scripts/releases.ts";
+import { releases, services, serviceConfig } from "../../scripts/releases.ts";
 import { workspace } from "../../scripts/hcp.ts";
 
 const directory = "providers/cloud-run/app";
@@ -36,8 +36,8 @@ if (mode === "plan") {
   assert(/^[0-9]+-[0-9]+$/.test(run));
   mkdirSync(artifacts, { recursive: true });
   const images: string[] = [];
-  for (const [index, name] of services.entries()) {
-    const image: string = `${region}-docker.pkg.dev/${project}/ipma/${index === 0 ? "adapter" : "gateway"}`;
+  for (const name of services) {
+    const image: string = `${region}-docker.pkg.dev/${project}/ipma/${serviceConfig[name].image}`;
     const tag = `${image}:${revision}-${run}`;
     execFileSync("docker", ["tag", `${name}:local`, tag], { stdio: "inherit" });
     execFileSync("docker", ["push", tag], { stdio: "inherit" });
@@ -60,6 +60,8 @@ if (mode === "plan") {
     environment,
     adapter_image: images[0],
     gateway_image: images[1],
+    public_data_adapter_image: images[2],
+    public_data_gateway_image: images[3],
   };
   writeFileSync(
     `${artifacts}/terraform.tfvars.json`,
@@ -124,7 +126,13 @@ if (mode === "plan") {
   writeFileSync(`${artifacts}/outputs.json`, JSON.stringify(outputs, null, 2));
   execFileSync(
     "node",
-    ["scripts/smoke.ts", outputs.adapter_url.value, outputs.gateway_url.value],
+    [
+      "scripts/smoke.ts",
+      outputs.adapter_url.value,
+      outputs.gateway_url.value,
+      outputs.public_data_adapter_url.value,
+      outputs.public_data_gateway_url.value,
+    ],
     { stdio: "inherit" },
   );
 }

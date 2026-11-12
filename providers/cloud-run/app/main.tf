@@ -111,3 +111,117 @@ resource "google_cloud_run_v2_service_iam_member" "gateway_public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+resource "google_cloud_run_v2_service" "public_data_adapter" {
+  name                = "ipma-public-data-adapter-${var.environment}"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
+  labels              = { application = "ipma", environment = var.environment }
+  scaling {
+    min_instance_count = var.minimum_instances
+    max_instance_count = var.maximum_instances
+  }
+  template {
+    service_account                  = "ipma-public-data-adapter@${var.project_id}.iam.gserviceaccount.com"
+    max_instance_request_concurrency = 8
+    timeout                          = "60s"
+    containers {
+      image = var.public_data_adapter_image
+      ports {
+        name           = "h2c"
+        container_port = 8080
+      }
+      resources {
+        limits            = { cpu = "1", memory = "512Mi" }
+        cpu_idle          = true
+        startup_cpu_boost = true
+      }
+      env {
+        name  = "RUST_LOG"
+        value = var.log_filter
+      }
+      startup_probe {
+        initial_delay_seconds = 0
+        period_seconds        = 2
+        timeout_seconds       = 1
+        failure_threshold     = 30
+        grpc {
+          port    = 8080
+          service = "ipma.public_data.v1.PublicDataService"
+        }
+      }
+    }
+  }
+}
+
+resource "google_cloud_run_v2_service" "public_data_gateway" {
+  name                = "ipma-public-data-gateway-${var.environment}"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
+  labels              = { application = "ipma", environment = var.environment }
+  scaling {
+    min_instance_count = var.minimum_instances
+    max_instance_count = var.maximum_instances
+  }
+  template {
+    service_account                  = "ipma-public-data-gateway@${var.project_id}.iam.gserviceaccount.com"
+    max_instance_request_concurrency = 32
+    timeout                          = "60s"
+    containers {
+      image = var.public_data_gateway_image
+      ports {
+        name           = "h2c"
+        container_port = 8080
+      }
+      resources {
+        limits            = { cpu = "1", memory = "512Mi" }
+        cpu_idle          = true
+        startup_cpu_boost = true
+      }
+      dynamic "env" {
+        for_each = {
+          IPMA_PUBLIC_DATA_GATEWAY_UPSTREAM_ADDRESS         = google_cloud_run_v2_service.public_data_adapter.uri
+          IPMA_PUBLIC_DATA_GATEWAY_CACHE_MIB                = tostring(var.public_data_cache_mib)
+          IPMA_PUBLIC_DATA_GATEWAY_UPSTREAM_TIMEOUT_SECONDS = "30"
+          IPMA_PUBLIC_DATA_GATEWAY_CACHE_NEUTRAL_METADATA   = "x-forwarded-for,x-forwarded-proto,x-forwarded-host,forwarded,x-cloud-trace-context,traceparent,tracestate"
+          RUST_LOG                                          = var.log_filter
+        }
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+      startup_probe {
+        initial_delay_seconds = 0
+        period_seconds        = 2
+        timeout_seconds       = 1
+        failure_threshold     = 30
+        grpc {
+          port    = 8080
+          service = "ipma.public_data.v1.PublicDataService"
+        }
+      }
+    }
+  }
+  depends_on = [google_cloud_run_v2_service_iam_member.public_data_adapter_public]
+}
+
+# Website feeds use an independent schema, runtime identity and deployment lifecycle.
+# Keep the adapter independently reachable for the direct benchmark baseline.
+# A future private adapter needs a portable service-auth design, not just this IAM flip.
+resource "google_cloud_run_v2_service_iam_member" "public_data_adapter_public" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.public_data_adapter.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+resource "google_cloud_run_v2_service_iam_member" "public_data_gateway_public" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.public_data_gateway.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

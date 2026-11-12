@@ -4,8 +4,8 @@ Portable assets are `containers/`, `compose.yaml`, `releases.json`, source-fetch
 validation and the native gRPC probes. The images run as a non-root user, require
 no persistent disk or Google libraries, accept configuration through environment
 variables and shut down on SIGTERM. They are built once and deployed by digest.
-The image labels record source repository/revision. `ipma-proto` is consumed by
-the services as a pinned Git dependency, not copied into an image's runtime.
+The image labels record source repository/revision. `ipma-proto` and `ipma-public-data-proto` are consumed by
+their respective service pairs as a pinned Git dependency, not copied into an image's runtime.
 
 `providers/cloud-run/` owns Google resource names, IAM, registry, HTTP/2 ingress,
 startup probes, scaling and OIDC setup. A Cloudflare/Koyeb target should add its
@@ -16,7 +16,7 @@ another registry. Pull/copy the exact digest; do not rebuild and assume identity
 
 Each gateway process has a separate Moka cache and miss coalescing scope. Scale
 to zero, restart or deployment loses that cache. A higher minimum instance count
-changes both cost and benchmark behavior; record it. The two Cloud Run services
+changes both cost and benchmark behavior; record it. The two services in each pair
 can incur separate cold starts. The gateway uses HTTPS to the independently
 public adapter; provider IAM authentication has not been added to the app.
 

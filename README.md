@@ -2,22 +2,25 @@
 
 Portable deployment of [ipma-proxy](https://github.com/Zizico2/ipma-proxy) and
 [ipma-gateway](https://github.com/Zizico2/ipma-gateway), using their shared
-[protobuf API](https://github.com/Zizico2/ipma-proto). Cloud Run is the first
+[protobuf API](https://github.com/Zizico2/ipma-proto). The independent [public-data proxy](https://github.com/Zizico2/ipma-public-data-proxy)
+and [public-data gateway](https://github.com/Zizico2/ipma-public-data-gateway)
+use [their own protobuf API](https://github.com/Zizico2/ipma-public-data-proto)
+for IPMA website feeds. Cloud Run is the first
 deployment target. Moka remains the gateway's local, disposable cache.
 
-The same two OCI images and native gRPC smoke tests can be used on Cloudflare
+The same four OCI images and native gRPC smoke tests can be used on Cloudflare
 Containers, Koyeb, a regional container host, or a local machine. Runtime code
 has no Google SDK dependency. Provider resources and deployment orchestration
 live under `providers/cloud-run/`; no Terraform provider is abstracted behind
 an artificial cross-cloud API.
 
 ```text
-client --gRPC/TLS--> gateway --gRPC/TLS--> adapter --HTTPS--> IPMA
-                       |
-                    local Moka
+documented API: client -> gateway -> adapter -> IPMA /open-data/
+website feeds:  client -> public-data-gateway -> public-data-adapter -> IPMA /public-data/
+Each gateway owns an independent local Moka cache.
 ```
 
-Both services are independently reachable for benchmarking. The initial API is
+All four services are independently reachable for benchmarking. The initial API is
 public and unauthenticated; an organization policy forbidding `allUsers` invokers
 requires an authentication design before deployment. The gateway's upstream URI
 is ordinary configuration, not a Google service-discovery dependency.
@@ -52,7 +55,7 @@ rtk proxy just down
 The smoke test contacts IPMA for a small number of forecasts and checks adapter
 freshness, gateway cache reuse across differing ingress headers, and bypass for
 application metadata. Use `releases.json` to adopt exact source commits. Source
-fetching checks that both services pin the same shared API revision and have no
+fetching checks that each service pair pins its own shared API revision and has no
 local API overrides. No sibling checkout is required.
 
 ## Cloud Run and manual deployment
@@ -103,3 +106,39 @@ ingress/tracing metadata via `IPMA_GATEWAY_CACHE_NEUTRAL_METADATA`. Those header
 are forwarded but do not bypass caching. Credentials, tenant IDs and other
 application context remain isolated. Other providers should supply their own
 reviewed list, rather than disabling metadata isolation.
+
+## Independent website-feed deployment
+
+Compose builds all four services. Existing ports stay 50051 (adapter) and 50052
+(gateway); website feeds use 50053 and 50054. The default `npm run smoke` verifies
+both contracts, including actual hourly forecast rows, catalogue/warning RPCs,
+cache reuse across ingress headers and caller-context bypass. Two explicit URLs
+check only the documented pair; four explicit URLs check both pairs.
+`npm run benchmark -- URL GetForecast 20` selects the website-feed contract;
+`IPMA_PUBLIC_DATA=1` selects that contract for Ping benchmarks.
+
+`releases.json` pins six repositories. Each service pair pins its matching proto
+repository with no local overrides. The container build remains generic and can
+build any of the four Rust binaries from immutable source checkouts.
+
+Cloud Run adds `ipma-public-data-adapter-ENV` and `ipma-public-data-gateway-ENV`,
+with independent runtime identities, health service names and upstream wiring.
+Existing Terraform resource addresses and source pins remain intact. Reapply the
+bootstrap configuration before deploying the expanded app to create the two new
+runtime identities and allow the gated deploy identity to use them. No cloud
+resources are changed by local validation. Both new services use the same bounded
+scale-to-zero defaults; this increases the total possible service instances.
+
+The public-data gateway's cache budget is independently configurable through
+`public_data_cache_mib` (default 64). Cloud outputs include
+`public_data_adapter_url` and `public_data_gateway_url`; image variables likewise
+use `public_data_adapter_image` and `public_data_gateway_image`. Deployment plans
+publish and record all four immutable image digests, and post-apply smoke checks
+both pairs. The existing plan/apply approval boundary is unchanged.
+
+Container configuration uses `IPMA_PUBLIC_DATA_PROXY_LISTEN_ADDR` and
+`IPMA_PUBLIC_DATA_GATEWAY_LISTEN_ADDR` for PORT mapping. The gateway takes
+`IPMA_PUBLIC_DATA_GATEWAY_UPSTREAM_ADDRESS` and the same timeout/cache/metadata
+options as the documented gateway, under the `IPMA_PUBLIC_DATA_GATEWAY_` prefix.
+The adapter defaults to `https://api.ipma.pt/public-data/`, overridable with
+`IPMA_PUBLIC_DATA_PROXY_UPSTREAM_BASE_URL`.

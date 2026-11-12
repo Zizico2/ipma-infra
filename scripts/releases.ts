@@ -1,8 +1,26 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-export const services = ["ipma-proxy", "ipma-gateway"] as const;
-export const projects = [...services, "ipma-proto"] as const;
+export const services = [
+  "ipma-proxy",
+  "ipma-gateway",
+  "ipma-public-data-proxy",
+  "ipma-public-data-gateway",
+] as const;
+export const protoProjects = ["ipma-proto", "ipma-public-data-proto"] as const;
+export const serviceConfig = {
+  "ipma-proxy": { proto: "ipma-proto", image: "adapter" },
+  "ipma-gateway": { proto: "ipma-proto", image: "gateway" },
+  "ipma-public-data-proxy": {
+    proto: "ipma-public-data-proto",
+    image: "public-data-adapter",
+  },
+  "ipma-public-data-gateway": {
+    proto: "ipma-public-data-proto",
+    image: "public-data-gateway",
+  },
+} as const;
+export const projects = [...services, ...protoProjects] as const;
 export type Project = (typeof projects)[number];
 export type Releases = Record<
   Project,
@@ -33,14 +51,20 @@ export function releases(): Releases {
 
 export function checkProtoPins(root: string, manifest: Releases): void {
   for (const name of services) {
+    const proto = serviceConfig[name].proto;
     const cargo = readFileSync(`${root}/${name}/Cargo.toml`, "utf8");
+    const dependency = cargo
+      .split("\n")
+      .find((line) => line.startsWith(`${proto} = `));
     assert(
-      cargo.includes(`rev = "${manifest["ipma-proto"].revision}"`),
-      `${name}: shared API pin differs`,
+      dependency?.includes(`git = "${manifest[proto].repository}"`) &&
+        dependency.includes(`rev = "${manifest[proto].revision}"`) &&
+        !dependency.includes("path ="),
+      `${name}: ${proto} pin differs`,
     );
     assert(
-      !cargo.includes('[patch."https://github.com/Zizico2/ipma-proto.git"]'),
-      `${name}: local API override`,
+      !/\[patch(?:\.|\])|\[replace\]/.test(cargo),
+      `${name}: API override`,
     );
   }
 }

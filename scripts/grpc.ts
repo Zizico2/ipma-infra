@@ -10,7 +10,18 @@ import {
 
 export type Data = Record<string, unknown>;
 
-export function client(endpoint: string) {
+export function client(endpoint: string, publicData = false) {
+  const schema = publicData
+    ? {
+        file: "ipma/public_data/v1/public_data.proto",
+        directory: ".sources/ipma-public-data-proto/proto",
+        service: "ipma.public_data.v1.PublicDataService",
+      }
+    : {
+        file: "ipma/proxy/v1/proxy.proto",
+        directory: ".sources/ipma-proto/proto",
+        service: "ipma.proxy.v1.ProxyService",
+      };
   const url = new URL(endpoint);
   assert(
     ["http:", "https:"].includes(url.protocol),
@@ -23,13 +34,13 @@ export function client(endpoint: string) {
       !url.search &&
       !url.hash,
   );
-  const definition = loadSync("ipma/proxy/v1/proxy.proto", {
-    includeDirs: [".sources/ipma-proto/proto"],
+  const definition = loadSync(schema.file, {
+    includeDirs: [schema.directory],
     longs: String,
     enums: String,
     defaults: false,
   });
-  const methods = definition["ipma.proxy.v1.ProxyService"] as Record<
+  const methods = definition[schema.service] as Record<
     string,
     MethodDefinition<Data, Data>
   >;
@@ -62,7 +73,7 @@ export function client(endpoint: string) {
         for (const [key, value] of Object.entries(headers))
           metadata.set(key, value);
         transport.makeUnaryRequest(
-          `/${"ipma.proxy.v1.ProxyService"}/${method}`,
+          `/${schema.service}/${method}`,
           rpc.requestSerialize,
           rpc.responseDeserialize,
           request,

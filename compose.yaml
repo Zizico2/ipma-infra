@@ -35,3 +35,39 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+  public-data-adapter:
+    platform: linux/amd64
+    image: ipma-public-data-proxy:local
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+      args:
+        SERVICE: ipma-public-data-proxy
+        SOURCE_REVISION: ${PUBLIC_DATA_ADAPTER_REVISION}
+    ports: ["127.0.0.1:50053:8080"]
+    environment:
+      RUST_LOG: ipma_public_data_proxy=info,ipma_public_data_service=info
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+  public-data-gateway:
+    platform: linux/amd64
+    image: ipma-public-data-gateway:local
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+      args:
+        SERVICE: ipma-public-data-gateway
+        SOURCE_REVISION: ${PUBLIC_DATA_GATEWAY_REVISION}
+    ports: ["127.0.0.1:50054:8080"]
+    environment:
+      IPMA_PUBLIC_DATA_GATEWAY_UPSTREAM_ADDRESS: http://public-data-adapter:8080
+      IPMA_PUBLIC_DATA_GATEWAY_CACHE_MIB: "64"
+      IPMA_PUBLIC_DATA_GATEWAY_CACHE_NEUTRAL_METADATA: x-forwarded-for,x-forwarded-proto,x-forwarded-host,forwarded,x-cloud-trace-context,traceparent,tracestate
+      RUST_LOG: ipma_public_data_gateway=info,ipma_public_data_gateway_core=info
+    depends_on: [public-data-adapter]
+    restart: on-failure:3
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

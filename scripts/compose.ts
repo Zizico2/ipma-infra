@@ -9,6 +9,8 @@ const result = spawnSync("docker", ["compose", ...process.argv.slice(2)], {
     ...process.env,
     ADAPTER_REVISION: pins["ipma-proxy"].revision,
     GATEWAY_REVISION: pins["ipma-gateway"].revision,
+    PUBLIC_DATA_ADAPTER_REVISION: pins["ipma-public-data-proxy"].revision,
+    PUBLIC_DATA_GATEWAY_REVISION: pins["ipma-public-data-gateway"].revision,
   },
 });
 if (result.error) throw result.error;

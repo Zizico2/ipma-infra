@@ -52,5 +52,29 @@ variable "cache_mib" {
 }
 variable "log_filter" {
   type    = string
-  default = "ipma_proxy=info,ipma_service=info,ipma_gateway=info,ipma_gateway_core=info"
+  default = "ipma_proxy=info,ipma_service=info,ipma_gateway=info,ipma_gateway_core=info,ipma_public_data_proxy=info,ipma_public_data_service=info,ipma_public_data_gateway=info,ipma_public_data_gateway_core=info"
+}
+
+variable "public_data_adapter_image" {
+  type = string
+  validation {
+    condition     = can(regex("@sha256:[a-f0-9]{64}$", var.public_data_adapter_image))
+    error_message = "Deploy immutable image digests."
+  }
+}
+variable "public_data_gateway_image" {
+  type = string
+  validation {
+    condition     = can(regex("@sha256:[a-f0-9]{64}$", var.public_data_gateway_image))
+    error_message = "Deploy immutable image digests."
+  }
+}
+
+variable "public_data_cache_mib" {
+  type    = number
+  default = 64
+  validation {
+    condition     = var.public_data_cache_mib >= 1 && var.public_data_cache_mib <= 256 && floor(var.public_data_cache_mib) == var.public_data_cache_mib
+    error_message = "Use 1..256 MiB with the default 512 MiB container memory limit."
+  }
 }

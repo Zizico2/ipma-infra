@@ -1,14 +1,20 @@
 import { client } from "./grpc.ts";
 
 const [endpoint, method = "Ping", countText = "20"] = process.argv.slice(2);
-if (!endpoint || !["Ping", "GetWeatherForecast"].includes(method))
+if (
+  !endpoint ||
+  !["Ping", "GetWeatherForecast", "GetForecast"].includes(method)
+)
   throw new Error(
-    "Usage: npm run benchmark -- ENDPOINT [Ping|GetWeatherForecast] [count]",
+    "Usage: npm run benchmark -- ENDPOINT [Ping|GetWeatherForecast|GetForecast] [count]",
   );
 const count = Number(countText);
 if (!Number.isInteger(count) || count < 1 || count > 1000)
   throw new Error("count must be 1..1000");
-const service = client(endpoint);
+const service = client(
+  endpoint,
+  method === "GetForecast" || process.env.IPMA_PUBLIC_DATA === "1",
+);
 const samples: number[] = [];
 let failures = 0;
 try {
@@ -18,7 +24,7 @@ try {
     try {
       const result = await service.call(
         method,
-        method === "GetWeatherForecast" ? { locationId: 1110600 } : {},
+        method !== "Ping" ? { locationId: 1110600 } : {},
       );
       const elapsed = performance.now() - started;
       samples.push(elapsed);
