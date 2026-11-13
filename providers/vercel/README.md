@@ -43,7 +43,7 @@ repository independently of this pipeline.
 2. Manually dispatch **Deploy Vercel weather** on `main`, selecting staging or
    production. Staging maps to Vercel **Preview**, production to **Production**.
 3. The build job runs `vercel pull`, validates the backend origin and runs
-   `vercel build --standalone` (with `--prod` only for production). Review the job summary and
+   `vercel build --standalone --environment=preview` (or `--environment=production`). Review the job summary and
    **vercel-weather-build** artifact: source revisions, target, project, backend
    origin and output SHA-256 are recorded in `release.json`.
 4. Approve the selected GitHub environment. Deploy validates the source/project/
@@ -54,6 +54,13 @@ repository independently of this pipeline.
    navigation and reuse of visited cities. The deployment URL is attached to the
    GitHub environment. Staging uses its generated Preview URL; production uses
    the project's configured production domains.
+
+The target is explicit in both build and deploy commands. Vercel assigns a new
+project's first deployment to Production. With an explicit Preview target, the
+CLI refuses that implicit promotion: bootstrap a new project through a separately
+reviewed Production deployment with its Production backend configured, then run
+staging. Do not remove the explicit target or retry staging with `--prod` to get
+past this check. The existing `ipma-weather` project is already bootstrapped.
 
 No rebuild or `vercel pull` happens after approval. The standalone output inlines
 traced dependencies for portability. The archive includes only `.vercel/output` and

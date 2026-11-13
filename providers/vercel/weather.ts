@@ -105,7 +105,9 @@ function main() {
     assert.equal(result.status, 0, `Vercel ${args[0]} failed`);
     return result.stdout?.trim();
   };
-  const production = deploymentTarget === "production" ? ["--prod"] : [];
+  // An omitted target lets Vercel promote a new project's first deploy to Production.
+  // Explicit Preview makes the CLI refuse that promotion instead.
+  const targetFlags = [`--environment=${deploymentTarget}`];
 
   if (mode === "build") {
     vercel(["pull", "--yes", `--environment=${deploymentTarget}`]);
@@ -120,7 +122,7 @@ function main() {
     const upstreamUrl = upstreamOrigin(env.IPMA_GRPC_URL);
     // Keep local shell overrides from changing the reviewed build's backend.
     process.env.IPMA_GRPC_URL = upstreamUrl;
-    vercel(["build", "--standalone", ...production]);
+    vercel(["build", "--standalone", ...targetFlags]);
     // Save the standalone output so deployment needs no rebuild on a new runner.
     // Never archive pulled .env files or the entire .vercel directory.
     execFileSync(
@@ -153,7 +155,7 @@ function main() {
         "deploy",
         "--prebuilt",
         "--yes",
-        ...production,
+        ...targetFlags,
         "--env",
         `IPMA_GRPC_URL=${upstreamUrl}`,
       ],

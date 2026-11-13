@@ -151,12 +151,14 @@ test("build output transfers to a fresh runner without pulled secrets or rebuild
         writeFileSync('.vercel/.env.preview.local', 'IPMA_GRPC_URL=https://gateway.example.com\\nSECRET=must-not-be-archived\\n');
       } else if (args[0] === 'build') {
         assert(args.includes('--standalone'));
+        assert(args.includes('--environment=preview'));
         assert(!args.includes('--prod'));
         assert.equal(process.env.IPMA_GRPC_URL, 'https://gateway.example.com');
         mkdirSync('.vercel/output', { recursive: true });
         writeFileSync('.vercel/output/config.json', JSON.stringify({ version: 3 }));
       } else if (args[0] === 'deploy') {
         assert(args.includes('--prebuilt'));
+        assert(args.includes('--environment=preview'));
         assert(!args.includes('--prod'));
         assert(args.includes('IPMA_GRPC_URL=https://gateway.example.com'));
         assert.equal(JSON.parse(readFileSync('.vercel/output/config.json')).version, 3);
