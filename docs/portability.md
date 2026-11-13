@@ -8,7 +8,7 @@ The image labels record source repository/revision. `ipma-proto` and `ipma-publi
 their respective service pairs as a pinned Git dependency, not copied into an image's runtime.
 
 `providers/cloud-run/` owns Google resource names, IAM, registry, HTTP/2 ingress,
-startup probes, scaling and OIDC setup. A Cloudflare/Koyeb target should add its
+startup probes, scaling and OIDC setup. Another container target should add its
 own directory and workflow while reusing the tested image contract. It should
 not wrap Cloud Run's Terraform resources or require changes to Rust application
 logic. Hosting the registry on Google does not prevent copying an OCI image to

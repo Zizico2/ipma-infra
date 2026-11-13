@@ -8,8 +8,7 @@ use [their own protobuf API](https://github.com/Zizico2/ipma-public-data-proto)
 for IPMA website feeds. Cloud Run is the first
 deployment target. Moka remains the gateway's local, disposable cache.
 
-The same four OCI images and native gRPC smoke tests can be used on Cloudflare
-Containers, Koyeb, a regional container host, or a local machine. Runtime code
+The same four OCI images and native gRPC smoke tests can be used on Koyeb, a regional container host, or a local machine. Runtime code
 has no Google SDK dependency. Provider resources and deployment orchestration
 live under `providers/cloud-run/`; no Terraform provider is abstracted behind
 an artificial cross-cloud API.
@@ -143,17 +142,16 @@ options as the documented gateway, under the `IPMA_PUBLIC_DATA_GATEWAY_` prefix.
 The adapter defaults to `https://api.ipma.pt/public-data/`, overridable with
 `IPMA_PUBLIC_DATA_PROXY_UPSTREAM_BASE_URL`.
 
-## Cloudflare weather deployment
+## Vercel weather deployment
 
-`ipma-weather` deployment is owned here, independently of the Rust service
-hosting. [Cloudflare instructions](providers/cloudflare/README.md) describe the
-Terraform-managed KV namespace and standard OpenNext/Wrangler deployment.
-The app keeps its Next/OpenNext build configuration and a local-only Wrangler
-configuration. This repository owns hosted names, resource IDs, gateway URLs,
-bindings, pinned source revisions and deployment approval gates.
+`ipma-weather` runs on Vercel's Node.js runtime. The four Rust services continue
+on Cloud Run and the app connects to the gateway with native HTTP/2 gRPC.
+[Vercel instructions](providers/vercel/README.md) cover project setup, environment
+variables, deployment and retiring the previous Cloudflare installation.
 
-The workflow **Deploy Cloudflare weather** is manually dispatched from `main`.
-It saves the Terraform plan and one built Worker artifact, then waits for the
-selected environment's approval before importing/creating the namespace and
-deploying. Existing staging keeps the `ipma-weather` name and cache namespace.
-The gRPC transport and Cloud Run services are unchanged by this migration.
+The manually dispatched **Deploy Vercel weather** workflow builds the exact app
+revision in `releases.json` once, records its source/target and artifact hash,
+then waits for the selected GitHub environment's approval. The deploy job sends
+the reviewed artifact with `vercel deploy --prebuilt`; it does not rebuild.
+Staging uses Vercel Preview and production uses Vercel Production. Hosted
+settings and credentials live in Vercel/GitHub, outside the app repository.

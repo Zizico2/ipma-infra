@@ -23,10 +23,7 @@ export async function workspace(
   create = false,
 ) {
   assert.match(organization, /^[a-zA-Z0-9_-]+$/);
-  assert.match(
-    name,
-    /^ipma-(bootstrap|(?:cloudflare-)?staging|(?:cloudflare-)?production)$/,
-  );
+  assert.match(name, /^ipma-(bootstrap|staging|production)$/);
   const headers = {
     Authorization: `Bearer ${token()}`,
     "Content-Type": "application/vnd.api+json",

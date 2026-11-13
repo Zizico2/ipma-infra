@@ -112,7 +112,8 @@ the deployment workspaces with the required state read/write/locking access.
 Prefer a dedicated team token where available. Enter it through GitHub Settings
 or interactive `gh secret set TF_API_TOKEN --repo Zizico2/ipma-infra`, not a
 command-line argument or committed environment file. No Google service-account
-JSON key or Cloudflare token is needed.
+JSON key is needed for Cloud Run. For weather hosting, see the separate
+[Vercel setup](../providers/vercel/README.md).
 
 The `staging` and `production` environment gates are configured by:
 

@@ -14,15 +14,15 @@
     "github:setup": "node scripts/github-environments.ts",
     "cloud-run:plan": "node providers/cloud-run/deploy.ts plan",
     "cloud-run:apply": "node providers/cloud-run/deploy.ts apply",
-    "cloudflare:plan": "node providers/cloudflare/weather.ts plan",
-    "cloudflare:build": "node providers/cloudflare/weather.ts build",
-    "cloudflare:deploy": "node providers/cloudflare/weather.ts deploy"
+    "vercel:build": "node providers/vercel/weather.ts build",
+    "vercel:deploy": "node providers/vercel/weather.ts deploy"
   },
   "type": "module",
   "devDependencies": {
     "@types/node": "26.6.6",
     "prettier": "3.9.10",
     "typescript": "7.0.2",
+    "vercel": "65.15.0",
     "yaml": "2.9.1"
   },
   "dependencies": {
