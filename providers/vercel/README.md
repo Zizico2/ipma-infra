@@ -1,7 +1,7 @@
 # Vercel weather hosting
 
-This directory deploys the pinned `ipma-weather` Next.js app to Vercel's Node.js
-runtime. The Rust adapters/gateways stay on Cloud Run. The app calls its gateway
+This directory deploys pinned releases of the `ipma-weather` Next.js app to
+Vercel's Node.js runtime. The Rust adapters/gateways stay on Cloud Run. The app calls its gateway
 with native HTTP/2 gRPC; no gRPC-Web bridge, OpenNext adapter, Workers patches or
 KV cache is involved. Vercel manages the Next.js framework cache.
 
@@ -31,9 +31,32 @@ KV cache is involved. Vercel manages the Next.js framework cache.
 6. Retain the existing `staging` and `production` GitHub environments, with their
    required reviewer and main-only deployment rules (`npm run github:setup`).
 
-The app's `vercel.json` disables automatic Git deployments so a connected Git
-integration cannot bypass the infra approval gate. Do not deploy from the app's
-repository independently of this pipeline.
+## MR previews
+
+Connect the existing `ipma-weather` Vercel project to `Zizico2/ipma-weather`
+under Project Settings → Git, with `main` as the Production Branch. Keep the
+GitHub integration's deployment comments and checks enabled. Vercel then builds
+branch pushes and attaches preview URLs/status to their pull requests, using the
+standard [Vercel for GitHub integration](https://vercel.com/docs/git/vercel-for-github).
+
+The app's `vercel.json` sets `git.deploymentEnabled.main` to `false`. Other
+branches retain Vercel's default automatic previews; merging to `main` does not
+publish production. This infra repository continues to own pinned releases and
+approval gates. No preview workflow, cross-repository dispatch token or Vercel
+deployment secret is required in the app repository.
+
+Set the Vercel project's Preview `IPMA_GRPC_URL` to the documented staging
+gateway. For the hourly forecast feature, also set Preview
+`IPMA_PUBLIC_DATA_GRPC_URL` to the staging public-data gateway. Configure the
+corresponding Production values before releasing an app revision that uses them.
+Both variables stay server-only; use HTTPS native gRPC origins. Branch-specific
+Preview values can be configured in Vercel when an MR needs a different backend.
+
+Keep Deployment Protection and Git Fork Protection enabled. Vercel handles fork
+deployment authorization. App GitHub Actions retain their deterministic native
+gRPC fixture tests; live preview deployment/checks are provided by Vercel.
+Existing open branches must include the updated `vercel.json` to stop inheriting
+the previous global `git.deploymentEnabled: false` setting.
 
 ## Review and deploy
 
@@ -66,7 +89,8 @@ No rebuild or `vercel pull` happens after approval. The standalone output inline
 traced dependencies for portability. The archive includes only `.vercel/output` and
 `.vercel/project.json`; pulled `.env` files are excluded. Other Vercel project
 runtime variables are resolved by Vercel at deployment time. This app currently
-only requires `IPMA_GRPC_URL`.
+requires `IPMA_GRPC_URL`; hourly-enabled revisions also require
+`IPMA_PUBLIC_DATA_GRPC_URL`.
 
 Use the locked CLI through `npm run vercel:build` and `npm run vercel:deploy` for
 an explicitly authorized local deployment. Both need the project/token variables,
