@@ -1,10 +1,16 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
-import { checkProtoPins, projects, releases } from "./releases.ts";
+import {
+  checkProtoPins,
+  protoProjects,
+  releases,
+  services,
+} from "./releases.ts";
 
 const manifest = releases();
 mkdirSync(".sources", { recursive: true });
-for (const name of projects) {
+// The private weather app is checked out separately by its deployment workflow.
+for (const name of [...services, ...protoProjects]) {
   const directory = `.sources/${name}`;
   rmSync(directory, { recursive: true, force: true });
   mkdirSync(directory);

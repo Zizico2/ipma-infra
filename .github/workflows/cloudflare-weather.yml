@@ -42,6 +42,16 @@ jobs:
       - run: nix develop --command npm ci --ignore-scripts
       - run: nix develop --command just verify
       - run: nix develop --command just sources
+      - name: Read the pinned app revision
+        id: weather
+        run: echo "revision=$(jq -r '."ipma-weather".revision' releases.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Zizico2/ipma-weather
+          ref: ${{ steps.weather.outputs.revision }}
+          path: .sources/ipma-weather
+          ssh-key: ${{ secrets.IPMA_WEATHER_DEPLOY_KEY }}
+          persist-credentials: false
       - run: bun install --frozen-lockfile
         working-directory: .sources/ipma-weather
       - name: Plan resource adoption and prepare deployment configuration
@@ -71,6 +81,16 @@ jobs:
           bun-version: 1.4.4
       - run: nix develop --command npm ci --ignore-scripts
       - run: nix develop --command just sources
+      - name: Read the pinned app revision
+        id: weather
+        run: echo "revision=$(jq -r '."ipma-weather".revision' releases.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Zizico2/ipma-weather
+          ref: ${{ steps.weather.outputs.revision }}
+          path: .sources/ipma-weather
+          ssh-key: ${{ secrets.IPMA_WEATHER_DEPLOY_KEY }}
+          persist-credentials: false
       - run: bun install --frozen-lockfile
         working-directory: .sources/ipma-weather
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

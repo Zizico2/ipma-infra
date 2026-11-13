@@ -46,6 +46,11 @@ secret. Add a repository Actions secret named `CLOUDFLARE_API_TOKEN`, scoped to
 the selected account with Workers Scripts: Edit and Workers KV Storage: Edit.
 Do not copy the locally cached Wrangler OAuth token into CI.
 
+`ipma-weather` is private. The workflow checks out its pinned revision with the
+standard checkout action and the `IPMA_WEATHER_DEPLOY_KEY` Actions secret. Its
+public key is registered as a read-only deploy key on the app repository. The
+regular Rust `sources` recipe only fetches the six public service/contract repos.
+
 Create the two additional HCP state workspaces with the existing setup recipe:
 
 ```sh
@@ -77,7 +82,9 @@ configure the repository variable `IPMA_WEATHER_PRODUCTION_GRPC_URL` with its HT
 gRPC gateway origin, or add `upstream_url` to production's checked-in tfvars.
 The workflow uses that variable only for production.
 
-For an equivalent local review using a dedicated API token:
+For an equivalent local review using a dedicated API token, first clone the
+private app into `.sources/ipma-weather` at its pinned revision in
+`releases.json`, using your normal GitHub credentials:
 
 ```sh
 rtk proxy npm ci --ignore-scripts
