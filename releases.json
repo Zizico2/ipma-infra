@@ -1,7 +1,7 @@
 {
   "ipma-proxy": {
     "repository": "https://github.com/Zizico2/ipma-proxy.git",
-    "revision": "1ebac4ffe858444016fe0673ea1949459b7b63bf"
+    "revision": "983ee504f1ce71d8620c667543114392ecb6ce3a"
   },
   "ipma-gateway": {
     "repository": "https://github.com/Zizico2/ipma-gateway.git",
@@ -13,7 +13,7 @@
   },
   "ipma-public-data-proxy": {
     "repository": "https://github.com/Zizico2/ipma-public-data-proxy.git",
-    "revision": "f84bc763f2099bd9b5527145a57a6c66a1a3f725"
+    "revision": "29259fe78615f9131f3a0a529c8c90670e3070bb"
   },
   "ipma-public-data-gateway": {
     "repository": "https://github.com/Zizico2/ipma-public-data-gateway.git",
