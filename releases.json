@@ -25,6 +25,6 @@
   },
   "ipma-weather": {
     "repository": "https://github.com/Zizico2/ipma-weather.git",
-    "revision": "3ce795a766573d0d61b1c66d7bd0c35861bd800e"
+    "revision": "094d19f7eabf3f99599a789e10cd8fdd59bdc922"
   }
 }
