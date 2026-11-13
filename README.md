@@ -117,7 +117,7 @@ check only the documented pair; four explicit URLs check both pairs.
 `npm run benchmark -- URL GetForecast 20` selects the website-feed contract;
 `IPMA_PUBLIC_DATA=1` selects that contract for Ping benchmarks.
 
-`releases.json` pins six repositories. Each service pair pins its matching proto
+`releases.json` pins seven repositories, including the weather app. Each service pair pins its matching proto
 repository with no local overrides. The container build remains generic and can
 build any of the four Rust binaries from immutable source checkouts.
 
@@ -142,3 +142,18 @@ Container configuration uses `IPMA_PUBLIC_DATA_PROXY_LISTEN_ADDR` and
 options as the documented gateway, under the `IPMA_PUBLIC_DATA_GATEWAY_` prefix.
 The adapter defaults to `https://api.ipma.pt/public-data/`, overridable with
 `IPMA_PUBLIC_DATA_PROXY_UPSTREAM_BASE_URL`.
+
+## Cloudflare weather deployment
+
+`ipma-weather` deployment is owned here, independently of the Rust service
+hosting. [Cloudflare instructions](providers/cloudflare/README.md) describe the
+Terraform-managed KV namespace and standard OpenNext/Wrangler deployment.
+The app keeps its Next/OpenNext build configuration and a local-only Wrangler
+configuration. This repository owns hosted names, resource IDs, gateway URLs,
+bindings, pinned source revisions and deployment approval gates.
+
+The workflow **Deploy Cloudflare weather** is manually dispatched from `main`.
+It saves the Terraform plan and one built Worker artifact, then waits for the
+selected environment's approval before importing/creating the namespace and
+deploying. Existing staging keeps the `ipma-weather` name and cache namespace.
+The gRPC transport and Cloud Run services are unchanged by this migration.

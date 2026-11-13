@@ -22,5 +22,9 @@
   "ipma-public-data-proto": {
     "repository": "https://github.com/Zizico2/ipma-public-data-proto.git",
     "revision": "cabad92076b69be09eedb164c3776035f5463934"
+  },
+  "ipma-weather": {
+    "repository": "https://github.com/Zizico2/ipma-weather.git",
+    "revision": "aac0460c9d313dcd6616cb60c75131753ef37aaa"
   }
 }

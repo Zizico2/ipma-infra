@@ -1,0 +1,7 @@
+{
+  "compatibility_date": "2026-11-11",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": {
+    "logs": { "enabled": true, "invocation_logs": true }
+  }
+}

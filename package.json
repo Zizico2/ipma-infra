@@ -13,7 +13,10 @@
     "hcp:setup": "node scripts/hcp-workspaces.ts",
     "github:setup": "node scripts/github-environments.ts",
     "cloud-run:plan": "node providers/cloud-run/deploy.ts plan",
-    "cloud-run:apply": "node providers/cloud-run/deploy.ts apply"
+    "cloud-run:apply": "node providers/cloud-run/deploy.ts apply",
+    "cloudflare:plan": "node providers/cloudflare/weather.ts plan",
+    "cloudflare:build": "node providers/cloudflare/weather.ts build",
+    "cloudflare:deploy": "node providers/cloudflare/weather.ts deploy"
   },
   "type": "module",
   "devDependencies": {

@@ -5,7 +5,13 @@ if (!organization)
   throw new Error(
     "Set TF_CLOUD_ORGANIZATION to your HCP Terraform organization",
   );
-for (const name of ["ipma-bootstrap", "ipma-staging", "ipma-production"]) {
+for (const name of [
+  "ipma-bootstrap",
+  "ipma-staging",
+  "ipma-production",
+  "ipma-cloudflare-staging",
+  "ipma-cloudflare-production",
+]) {
   await workspace(organization, name, true);
   console.log(`${organization}/${name}: local execution, HCP state`);
 }

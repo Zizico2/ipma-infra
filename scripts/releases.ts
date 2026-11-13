@@ -20,7 +20,11 @@ export const serviceConfig = {
     image: "public-data-gateway",
   },
 } as const;
-export const projects = [...services, ...protoProjects] as const;
+export const projects = [
+  ...services,
+  ...protoProjects,
+  "ipma-weather",
+] as const;
 export type Project = (typeof projects)[number];
 export type Releases = Record<
   Project,

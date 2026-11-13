@@ -24,6 +24,14 @@ terraform-check:
         terraform -chdir="providers/cloud-run/$root" test
     done
 
+cloudflare-terraform-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export TF_DATA_DIR="$PWD/.artifacts/terraform-check/cloudflare-weather"
+    terraform -chdir=providers/cloudflare/weather init -backend=false -input=false -lockfile=readonly
+    terraform -chdir=providers/cloudflare/weather validate
+    terraform -chdir=providers/cloudflare/weather test
+
 images:
     npm run compose -- build
 
@@ -39,7 +47,7 @@ smoke *args:
 benchmark *args:
     npm run benchmark -- "$@"
 
-verify: check terraform-check
+verify: check terraform-check cloudflare-terraform-check
 
 # Authenticate only when explicitly invoked; shell entry never performs login.
 login:
