@@ -1,47 +1,39 @@
-name: Deploy Cloudflare weather
+name: Deploy Vercel weather
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: Environment to deploy (review the saved plan before approval)
+        description: Environment to deploy (review the saved build before approval)
         required: true
         type: choice
         options: [staging, production]
 permissions:
   contents: read
 concurrency:
-  group: cloudflare-weather-${{ inputs.environment }}
+  group: vercel-weather-${{ inputs.environment }}
   cancel-in-progress: false
 env:
   DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
-  TF_IN_AUTOMATION: "true"
-  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
 jobs:
-  plan:
+  build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    env:
-      TF_VAR_upstream_url: ${{ inputs.environment == 'production' && vars.IPMA_WEATHER_PRODUCTION_GRPC_URL || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.4.4
-      - name: Check credentials
-        shell: bash
-        run: |
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$TF_TOKEN_app_terraform_io"
-          test -n "$TF_CLOUD_ORGANIZATION"
-      - run: nix develop --command npm ci --ignore-scripts
-      - run: nix develop --command just verify
-      - run: nix develop --command just sources
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm run fmt:check
       - name: Read the pinned app revision
         id: weather
         run: echo "revision=$(jq -r '."ipma-weather".revision' releases.json)" >> "$GITHUB_OUTPUT"
@@ -54,33 +46,35 @@ jobs:
           persist-credentials: false
       - run: bun install --frozen-lockfile
         working-directory: .sources/ipma-weather
-      - name: Plan resource adoption and prepare deployment configuration
-        run: nix develop --command npm run cloudflare:plan
       - name: Build the pinned app once for review and deployment
-        run: nix develop --command npm run cloudflare:build
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npm run vercel:build
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: cloudflare-weather-plan
-          path: .artifacts/cloudflare/
+          name: vercel-weather-build
+          path: .artifacts/vercel/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 3
   deploy:
-    needs: plan
+    needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment:
       name: ${{ inputs.environment }}
+      url: ${{ steps.deploy.outputs.deployment_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: cachix/install-nix-action@91f6a0f59e94dfb2cfed0f4000f36a68ead1d20c # v31.11.4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.4.4
-      - run: nix develop --command npm ci --ignore-scripts
-      - run: nix develop --command just sources
+      - run: npm ci --ignore-scripts
       - name: Read the pinned app revision
         id: weather
         run: echo "revision=$(jq -r '."ipma-weather".revision' releases.json)" >> "$GITHUB_OUTPUT"
@@ -95,16 +89,24 @@ jobs:
         working-directory: .sources/ipma-weather
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: cloudflare-weather-plan
-          path: .artifacts/cloudflare/
-      - name: Apply the reviewed plan and deploy the reviewed app build
+          name: vercel-weather-build
+          path: .artifacts/vercel/
+      - name: Deploy the reviewed app build without rebuilding
         id: deploy
-        run: nix develop --command npm run cloudflare:deploy
-      - name: Verify the deployed Worker
         env:
-          WORKER_TEST_URL: ${{ steps.deploy.outputs.worker_url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npm run vercel:deploy
+      - name: Verify the deployed app
+        env:
+          DEPLOYED_TEST_URL: ${{ steps.deploy.outputs.deployment_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         working-directory: .sources/ipma-weather
         run: |
-          test -n "$WORKER_TEST_URL"
-          bunx playwright install chromium firefox
-          bunx playwright test --config playwright.worker.config.ts
+          bunx playwright install chromium
+          bun run test:e2e:deployed
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: vercel-weather-traces
+          path: .sources/ipma-weather/test-results/
+          retention-days: 3
